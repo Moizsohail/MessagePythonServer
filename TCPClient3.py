@@ -29,7 +29,7 @@ clientSocket.connect(serverAddress)
 
 def sendToServer(message):
     # if args.d:
-    #     print(f"[send] {command}")
+    print(f"[send] {message}")
     clientSocket.send(message.encode())
 def recvFromServer():
     msg = clientSocket.recv(BUFFER_SIZE).decode().split(" ")
@@ -63,7 +63,7 @@ print("Welcome to the greatest messaging application ever!")
 class RespondingThread(Thread):
     def run(self):
         while True:
-            message = input("::")
+            message = input("")
             sendToServer(message)
         
     
@@ -83,6 +83,7 @@ while True:
     
     elif cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
+    
     elif cmd == LIST_OF_OTHER_USERS:
         if len(data[1:]) == 0:
             print("Nobody but you.")
@@ -93,7 +94,7 @@ while True:
         print(MESSAGES[cmd])
         break
 
-    elif cmd in COMMON_EXCEPTIONS:
+    elif cmd in REQUIRES_PRINT:
         print(MESSAGES[cmd])
 
     else:
