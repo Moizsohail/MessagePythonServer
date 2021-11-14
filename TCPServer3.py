@@ -6,16 +6,24 @@
     
     Author: Wei Song (Tutor for COMP3331/9331)
 """
+import os
 from socket import *
 from threading import Thread
-import sys, select
+import argparse
+
+from constants import *
 
 # acquire server host and port from command line parameter
-if len(sys.argv) != 2:
-    print("\n===== Error usage, python3 TCPServer3.py SERVER_PORT ======\n");
-    exit(0);
+parser = argparse.ArgumentParser()
+parser.add_argument('port',
+                       type=int,
+                       help='port to operate on')
+parser.add_argument('-d', action='store_true',help="debug")
+args = parser.parse_args()
+print(args)
+
 serverHost = "127.0.0.1"
-serverPort = int(sys.argv[1])
+serverPort = args.port
 serverAddress = (serverHost, serverPort)
 
 # define socket for the server side and bind address
@@ -36,6 +44,7 @@ class ClientThread(Thread):
         self.clientAddress = clientAddress
         self.clientSocket = clientSocket
         self.clientAlive = False
+        self.isAuthenticated = False
         
         print("===== New connection created for: ", clientAddress)
         self.clientAlive = True
@@ -45,9 +54,12 @@ class ClientThread(Thread):
         
         while self.clientAlive:
             # use recv() to receive message from the client
-            data = self.clientSocket.recv(1024)
-            message = data.decode()
             
+            message = self.recvFromClient()
+
+            if not self.isAuthenticated:
+                self.process_authentication(message)
+                continue
             # if the message from client is empty, the client would be off-line then set the client as offline (alive=Flase)
             if message == '':
                 self.clientAlive = False
@@ -76,11 +88,48 @@ class ClientThread(Thread):
             message = 'user credentials request'
             self.clientSocket.send(message.encode())
     """
-    def process_login(self):
-        message = 'user credentials request'
-        print('[send] ' + message);
-        self.clientSocket.send(message.encode())
+    def sendToClient(self,command):
+        if args.d:
+            print(f"[send] {command}")
+        self.clientSocket.send(command.encode())
+    def recvFromClient(self):
+        msg = self.clientSocket.recv(BUFFER_SIZE).decode()
+        if args.d:
+            print(f"[recv] {msg}")
+        return msg
 
+    def process_authentication(self,username):
+        
+        ## TODO validate username
+        foundPassword = None
+        if os.path.isfile(CREDENTIALS_FILE):
+            with open(CREDENTIALS_FILE,'r') as f:
+                creds = f.readlines()
+                for cred in creds:
+                    print(cred)
+                    usr,pwd = cred.split(" ")
+                    if usr == username:
+                        foundPassword = pwd
+        
+        if not foundPassword:
+            self.sendToClient(NEW_USER)
+        else:
+            self.sendToClient(FOUND_USER)
+
+        password = self.recvFromClient()
+        if not foundPassword:
+            with open(CREDENTIALS_FILE,'a') as f:
+                f.write(f"{username} {password}")
+            self.sendToClient(AUTHENTICATED)
+        else:
+            if foundPassword == password:
+                self.isAuthenticated = True
+                self.sendToClient(AUTHENTICATED)
+            else:
+                self.sendToClient(INVALID_CREDENTIALS)
+
+        
+    
 
 print("\n===== Server is running =====")
 print("===== Waiting for connection request from clients...=====")

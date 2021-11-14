@@ -7,6 +7,9 @@
 """
 from socket import *
 import sys
+from types import resolve_bases
+
+from constants import *
 
 #Server would be running on the same host as Client
 if len(sys.argv) != 3:
@@ -21,6 +24,38 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 
 # build connection with the server and send message to it
 clientSocket.connect(serverAddress)
+
+## Credentials
+
+def sendToClient(command):
+    # if args.d:
+    #     print(f"[send] {command}")
+    clientSocket.send(command.encode())
+def recvFromClient():
+    msg = clientSocket.recv(BUFFER_SIZE).decode()
+    # if args.d:
+    #     print(f"[recv] {msg}")
+    return msg
+
+
+
+username = input("Username: ")
+sendToClient(username)
+response = recvFromClient()
+print(response)
+if response == NEW_USER:
+    password = input("This is a new user. Enter a password: ")
+else:
+    password = input("Password: ")
+
+while True:
+    sendToClient(password)
+    response = recvFromClient()
+    if response == AUTHENTICATED:
+        break
+
+
+print("Welcome to the greatest messaging application ever!")
 
 while True:
     message = input("===== Please type any messsage you want to send to server: =====\n")

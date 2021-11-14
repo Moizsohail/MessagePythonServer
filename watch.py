@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-w", "--watch", nargs="+", required=True)
 parser.add_argument("-c", "--command", nargs="+", required=True)
+parser.add_argument("-s", "--special", action="store_true",default=False)
 args = parser.parse_args()
 
 
@@ -18,6 +19,9 @@ def re_execute(command):
 
 
 command = args.command
+
+if args.special:
+    command = command[0]
 
 
 last_change = [os.stat(filename).st_mtime for filename in args.watch]
