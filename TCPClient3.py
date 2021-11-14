@@ -12,9 +12,9 @@ from types import resolve_bases
 
 from constants import *
 
-#Server would be running on the same host as Client
+# Server would be running on the same host as Client
 if len(sys.argv) != 3:
-    print("\n===== Error usage, python3 TCPClient3.py SERVER_IP SERVER_PORT ======\n");
+    print("\n===== Error usage, python3 TCPClient3.py SERVER_IP SERVER_PORT ======\n")
     exit(0)
 serverHost = sys.argv[1]
 serverPort = int(sys.argv[2])
@@ -27,16 +27,18 @@ clientSocket.connect(serverAddress)
 
 ## Credentials
 
+
 def sendToServer(message):
     # if args.d:
     print(f"[send] {message}")
     clientSocket.send(message.encode())
+
+
 def recvFromServer():
     msg = clientSocket.recv(BUFFER_SIZE).decode().split(" ")
     # if args.d:
     print(f"[recv] {msg}")
     return msg
-
 
 
 username = input("Username: ")
@@ -60,13 +62,14 @@ while True:
 
 print("Welcome to the greatest messaging application ever!")
 
+
 class RespondingThread(Thread):
     def run(self):
         while True:
             message = input("")
             sendToServer(message)
-        
-    
+
+
 thread = RespondingThread()
 thread.daemon = True
 thread.start()
@@ -80,15 +83,22 @@ while True:
     # parse the message received from server and take corresponding actions
     if cmd == "":
         print("[recv] Message from server is empty!")
-    
+
     elif cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
-    
+
     elif cmd == LIST_OF_OTHER_USERS:
         if len(data[1:]) == 0:
             print("Nobody but you.")
         else:
-            print('\n'.join(data[1:]))
+            print("\n".join(data[1:]))
+
+    elif cmd == LIST_OF_OTHER_USERS_SINCE:
+        if len(data[1:]) == 0:
+            print("Nobody but you.")
+        else:
+            print("\n".join(data[1:]))
+
     ## EXIT COMMANDS
     elif cmd in COMMON_EXIT_EXCEPTIONS:
         print(MESSAGES[cmd])
