@@ -3,13 +3,13 @@
 - [x] Blocking user for specified interval after 3 unsuccessful attempts 
 - [x] Successful log in for multiple clients
 - [ ] Correct implementation of presence notification
-- [ ] Correct implementation of whoelse
-- [ ] Correct implementation of whoelsesince
+- [x] Correct implementation of whoelse
+- [x] Correct implementation of whoelsesince
 - [ ] Correct implementation of timeout functionality after inactivity
 - [ ] Correct implementation of broadcast
-- [ ] Correct implementation of messaging between two online clients
+- [x] Correct implementation of messaging between two online clients
 - [ ] Correct implementation of offline messaging
-- [ ] Correct implementation of user blocking and unblocking and its effects
+- [x] Correct implementation of user blocking and unblocking and its effects
 - [ ] Properly documented report 
 
 **Peer to peer Messaging**
