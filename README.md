@@ -12,7 +12,7 @@
 - [ ] Correct implementation of user blocking and unblocking and its effects
 - [ ] Properly documented report 
 
-Peer to peer Messaging
+**Peer to peer Messaging**
 
 - [ ] Correct implementation of startprivate accounting for all different
 considerations (declined chat, blocked user, etc.)
