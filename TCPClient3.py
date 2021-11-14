@@ -7,6 +7,7 @@
 """
 from socket import *
 import sys
+from threading import Event, Thread
 from types import resolve_bases
 
 from constants import *
@@ -14,73 +15,91 @@ from constants import *
 #Server would be running on the same host as Client
 if len(sys.argv) != 3:
     print("\n===== Error usage, python3 TCPClient3.py SERVER_IP SERVER_PORT ======\n");
-    exit(0);
+    exit(0)
 serverHost = sys.argv[1]
 serverPort = int(sys.argv[2])
 serverAddress = (serverHost, serverPort)
 
 # define a socket for the client side, it would be used to communicate with the server
 clientSocket = socket(AF_INET, SOCK_STREAM)
-
 # build connection with the server and send message to it
 clientSocket.connect(serverAddress)
 
 ## Credentials
 
-def sendToClient(command):
+def sendToServer(message):
     # if args.d:
     #     print(f"[send] {command}")
-    clientSocket.send(command.encode())
-def recvFromClient():
-    msg = clientSocket.recv(BUFFER_SIZE).decode()
+    clientSocket.send(message.encode())
+def recvFromServer():
+    msg = clientSocket.recv(BUFFER_SIZE).decode().split(" ")
     # if args.d:
-    #     print(f"[recv] {msg}")
+    print(f"[recv] {msg}")
     return msg
 
 
 
 username = input("Username: ")
-sendToClient(username)
-response = recvFromClient()
-print(response)
-if response == NEW_USER:
+sendToServer(username)
+cmd = recvFromServer()[0]
+if cmd == NEW_USER:
     password = input("This is a new user. Enter a password: ")
+elif cmd == ALREADY_ACTIVE:
+    print("The user is already online on another client")
+    exit(0)
 else:
     password = input("Password: ")
 
 while True:
-    sendToClient(password)
-    response = recvFromClient()
-    if response == AUTHENTICATED:
+    sendToServer(password)
+    cmd = recvFromServer()[0]
+    if cmd == AUTHENTICATED:
         break
+    password = input("Invalid credentials. Enter a password: ")
 
 
 print("Welcome to the greatest messaging application ever!")
 
-while True:
-    message = input("===== Please type any messsage you want to send to server: =====\n")
-    clientSocket.sendall(message.encode())
+class RespondingThread(Thread):
+    def run(self):
+        while True:
+            message = input("::")
+            sendToServer(message)
+        
+    
+thread = RespondingThread()
+thread.daemon = True
+thread.start()
 
-    # receive response from the server
-    # 1024 is a suggested packet size, you can specify it as 2048 or others
-    data = clientSocket.recv(1024)
-    receivedMessage = data.decode()
+
+while True:
+
+    data = recvFromServer()
+    cmd = data[0]
 
     # parse the message received from server and take corresponding actions
-    if receivedMessage == "":
+    if cmd == "":
         print("[recv] Message from server is empty!")
-    elif receivedMessage == "user credentials request":
-        print("[recv] You need to provide username and password to login")
-    elif receivedMessage == "download filename":
-        print("[recv] You need to provide the file name you want to download")
-    else:
-        print("[recv] Message makes no sense")
-        
-    ans = input('\nDo you want to continue(y/n) :')
-    if ans == 'y':
-        continue
-    else:
+    
+    elif cmd == MESSAGE:
+        print(f"{data[1]}: {' '.join(data[2:])}")
+    elif cmd == LIST_OF_OTHER_USERS:
+        if len(data[1:]) == 0:
+            print("Nobody but you.")
+        else:
+            print('\n'.join(data[1:]))
+    ## EXIT COMMANDS
+    elif cmd in COMMON_EXIT_EXCEPTIONS:
+        print(MESSAGES[cmd])
         break
 
-# close the socket
+    elif cmd in COMMON_EXCEPTIONS:
+        print(MESSAGES[cmd])
+
+    else:
+        print("[recv] Message makes no sense")
+
+
+# thread.stop()
 clientSocket.close()
+exit(0)
