@@ -178,8 +178,13 @@ class ClientThread(Thread):
         if len(message) < 3:
             raise CustomExceptions(INVALID_INPUT)
         username = message[1]
+
+        if username == self.user.username:
+            raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
+
         text = " ".join(message[2:])
         user = users.get(username)
+
         if not user:
             raise CustomExceptions(USER_NOT_FOUND)
         if self.user.username in user.blockedUserNames:

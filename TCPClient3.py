@@ -7,8 +7,7 @@
 """
 from socket import *
 import sys
-from threading import Event, Thread
-from types import resolve_bases
+from threading import Thread
 
 from constants import *
 
