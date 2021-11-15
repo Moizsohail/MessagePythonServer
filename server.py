@@ -13,6 +13,7 @@ from threading import Thread
 import argparse
 
 from constants import *
+from offline import Offline
 from user import User
 
 # acquire server host and port from command line parameter
@@ -26,6 +27,7 @@ parser.add_argument("timeout", type=int, help="Timeout")
 parser.add_argument("-d", action="store_true", help="debug")
 args = parser.parse_args()
 
+offline = Offline()
 
 serverHost = "127.0.0.1"
 serverPort = args.server_port
@@ -34,7 +36,7 @@ serverAddress = (serverHost, serverPort)
 # define socket for the server side and bind address
 serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.bind(serverAddress)
-startTime = datetime.datetime.now()
+
 users = {}
 
 
@@ -60,27 +62,35 @@ class ClientThread(Thread):
                         cmd = message[0]
                     except timeout:
                         self.processInactivity()
-                    print("[Error]", self.clientAddress)
                     self.clientSocket.settimeout(None)
 
                     if not self.isAuthenticated:
                         self.processAuthentication(cmd)
+                        self.processOfflineQueue()
 
                     # handle message from the client
                     elif cmd == MESSAGE:
                         self.processMessage(message)
-
+                    elif cmd == BROADCAST:
+                        self.processBroadcast(message)
                     elif cmd == BLOCK:
                         self.processBlock(message)
                     elif cmd == UNBLOCK:
                         self.processUnblock(message)
+                    elif cmd == START_PRIVATE:
+                        self.processPrivateRequest(message)
+                    elif cmd == PRIVATE_REQUEST_ACCEPTED:
+                        self.processInitiateP2P(message)
+                    elif cmd == PRIVATE_REQUEST_DENIED:
+                        self.processDeniedP2PRequest(message)
                     elif cmd == WHOELSE:
                         self.processWhoElse()
                     elif cmd == WHOELSESINCE:
                         self.processWhoElseSince(message)
                     elif cmd == LOGOUT:
                         self.processLogout()
-
+                    else:
+                        raise CustomExceptions(INVALID_COMMAND)
                 except CustomExceptions as e:
                     self.sendToClient(str(e))
 
@@ -93,24 +103,87 @@ class ClientThread(Thread):
 
     def sendToClient(self, command, payload=None, user=None):
         message = f"{command}"
-        if not user:
-            if payload:
-                message += f" {payload}"
-            self.clientSocket.send(message.encode())
-        else:
+        if user:
             message += f" {self.user.username}"
-            if payload:
-                message += f" {payload}"
-            user.clientSocket.send(message.encode())
-        if args.d:
-            print(f"[send] {message} ")
 
-    def recvFromClient(self):
-        msg = self.clientSocket.recv(BUFFER_SIZE).decode()
+        if payload:
+            message += f" {payload}"
+
+        (self.clientSocket if not user else user.clientSocket).send(message.encode())
+
+        if args.d:
+            print(
+                f"[send to {user.username if user else (self.user.username if self.user else '')}] {message} "
+            )
+
+    def processOfflineQueue(self):
+        if self.isAuthenticated:
+            msgs = offline.fetch(self.user.username)
+            for msg in msgs:
+                self.sendToClient(MESSAGE, msg)
+
+    def processDeniedP2PRequest(self, message):
+        if len(message) < 2:
+            raise CustomExceptions(INVALID_INPUT)
+        username = message[1]
+        user = users.get(username)
+        if not user:
+            raise CustomExceptions(USER_NOT_ONLINE)
+        if user.authenticateP2PRequest(username):
+            raise CustomExceptions(INVALID_INPUT)
+
+        self.sendToClient(PRIVATE_REQUEST_DENIED, None, user)
+        self.user.acceptingP2PConnectionsWith = None
+
+    def isRegistered(self, username):
+        with open(CREDENTIALS_FILE, "r") as f:
+            creds = f.readlines()
+            for cred in creds:
+                usr, _ = cred.split(" ")
+
+                if usr == username:
+                    return True
+        return False
+
+    def processInitiateP2P(self, message):
+        if len(message) < 2:
+            raise CustomExceptions(INVALID_INPUT)
+        username = message[1]
+        user = users.get(username)
+        if not user:
+            raise CustomExceptions(USER_NOT_ONLINE)
+        if user.authenticateP2PRequest(username):
+            raise CustomExceptions(INVALID_INPUT)
+        if self.user.username == username:
+            raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
+
+        addr, port = message[2:]
+        payload = f"{addr} {port}"
+        self.sendToClient(PRIVATE_REQUEST_ACCEPTED, payload, user)
+        self.user.acceptingP2PConnectionsWith = None
+
+    def recvFromClient(self, socket=None):
+        msg = (socket or self.clientSocket).recv(BUFFER_SIZE).decode()
         msg = msg.split(" ")
         if args.d:
-            print(f"[recv] {msg}")
+            print(f"[recv by {self.user.username if self.user else ''}] {msg}")
         return msg
+
+    def processPrivateRequest(self, message):
+        if len(message) < 4:
+            raise CustomExceptions(INVALID_INPUT)
+
+        username = message[1]
+        user = users.get(username)
+        if username == self.user.username:
+            raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
+        if self.isRegistered(username):
+            raise CustomExceptions(USER_NOT_FOUND)
+        if not user:
+            raise CustomExceptions(USER_NOT_ONLINE)
+
+        addr, port = message[2:]
+        self.sendToClient(PRIVATE_REQUEST, f"{addr} {port}", user)
 
     def processWhoElseSince(self, message):
         if len(message) < 2:
@@ -160,19 +233,25 @@ class ClientThread(Thread):
             raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
         if username in self.user.blockedUserNames:
             raise CustomExceptions(ALREADY_BLOCKED)
-        found = False
-        with open(CREDENTIALS_FILE, "r") as f:
-            creds = f.readlines()
-            for cred in creds:
-                usr, _ = cred.split(" ")
 
-                if usr == username:
-                    found = True
-        if found:
+        if self.isRegistered(username):
             self.user.blockedUserNames += [username]
             self.sendToClient(SUCCESS)
         else:
             raise CustomExceptions(USER_NOT_FOUND)
+
+    def processBroadcast(self, message):
+        for username in users:
+            user = users[username]
+            if username != self.user.username and username not in user.blockedUserNames:
+                text = " ".join(message[1:])
+                self.sendToClient(MESSAGE, "text", user)
+
+    def notifyAll(self, text):
+        for username in users:
+            user = users[username]
+            if username != self.user.username and username not in user.blockedUserNames:
+                self.sendToClient(NOTIFICATION, text, user)
 
     def processMessage(self, message):
         if len(message) < 3:
@@ -181,25 +260,35 @@ class ClientThread(Thread):
 
         if username == self.user.username:
             raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
+        if not self.isRegistered(username):
+            raise CustomExceptions(USER_NOT_FOUND)
 
         text = " ".join(message[2:])
         user = users.get(username)
 
         if not user:
-            raise CustomExceptions(USER_NOT_FOUND)
+            offline.queue(username, f"{self.user.username} {text}")
+            raise CustomExceptions(OFFLINE_MESSAGE_DELIVERED)
         if self.user.username in user.blockedUserNames:
             raise CustomExceptions(USER_IS_BLOCKED)
 
         self.sendToClient(MESSAGE, text, user)
 
     def processLogout(self):
+        self.notifyAll(lifePotion("User logged out.", self.user.username))
         raise CustomExceptions(LOGOUT)
 
     def initUser(self, username, password):
         if users.get(username):
             raise CustomExceptions(ALREADY_ACTIVE)
 
-        self.user = User(username, password, args.block_duration, self.clientSocket)
+        self.user = User(
+            username,
+            password,
+            args.block_duration,
+            self.clientSocket,
+            self.clientAddress,
+        )
         users[username] = self.user
 
     def processInactivity(self):
@@ -243,15 +332,15 @@ class ClientThread(Thread):
                     self.sendToClient(INVALID_CREDENTIALS)
                     password = self.recvFromClient()[0]
 
+        if self.isAuthenticated:
+            self.notifyAll(lifePotion("User logged in.", username))
+
 
 print("\n===== Server is running =====")
 print("===== Waiting for connection request from clients...=====")
 
-clientSocks, clientAddresses = [], []
 while True:
     serverSocket.listen()
     sock, address = serverSocket.accept()
     clientThread = ClientThread(address, sock)
-    # clientSocks.append(sock)
-    # clientAddresses.append(address)
     clientThread.start()
