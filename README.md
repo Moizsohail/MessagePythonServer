@@ -17,7 +17,7 @@
 - [x] Correct implementation of startprivate accounting for all different
 considerations (declined chat, blocked user, etc.)
 - [x] Correct implementation of p2p messaging
-- [ ] Correct implementation of stopprivate
+- [x] Correct implementation of stopprivate
 - [ ] Correct implementation of timeout accounting for p2p interaction
-- [ ] Correct implementation of simultaneous execution of p2p messaging
+- [x] Correct implementation of simultaneous execution of p2p messaging
 and regular commands sent to the server.
