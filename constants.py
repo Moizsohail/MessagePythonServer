@@ -36,7 +36,7 @@ USER_IS_BLOCKED = "UserIsBlocked"
 ALREADY_UNBLOCKED = "AlreadyUnblocked"
 INVALID_COMMAND = "INVALID COMMAND"
 OFFLINE_MESSAGE_DELIVERED = "OfflineMessageDelivered"
-
+ALREADY_CONNECTED = "AlreadyConnected"
 REQUIRES_PRINT = [
     SUCCESS,
     USER_NOT_FOUND,
@@ -49,6 +49,8 @@ REQUIRES_PRINT = [
     USER_NOT_ONLINE,
     OFFLINE_MESSAGE_DELIVERED,
     INVALID_COMMAND,
+    ALREADY_CONNECTED,
+    INACTIVITY,
 ]
 
 COMMON_EXIT_EXCEPTIONS = [
@@ -58,8 +60,6 @@ COMMON_EXIT_EXCEPTIONS = [
 ]
 
 MESSAGES = {
-    NEW_USER: "New User",
-    FOUND_USER: "Existing User",
     AUTHENTICATED: "Authentication Successful",
     INVALID_CREDENTIALS: "Invalid Credentials",
     INVALID_COMMAND: "Do not understand this command",
@@ -76,6 +76,7 @@ MESSAGES = {
     ALREADY_UNBLOCKED: "The user is already unblocked",
     PRIVATE_REQUEST_DENIED: "The user has denied your request",
     OFFLINE_MESSAGE_DELIVERED: "The user is offline. He will see the message when he/she comes online",
+    ALREADY_CONNECTED: "Cannot connect! Already paired with User",
 }
 
 CREDENTIALS_FILE = "credentials.txt"
@@ -83,7 +84,16 @@ BUFFER_SIZE = 1024
 
 
 class CustomExceptions(Exception):
-    pass
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        print(args)
+
+
+def displayMessage(response):
+    msg = MESSAGES[response[0]]
+    if len(response) == 2:
+        msg = lifePotion(msg, response[1])
+    return msg
 
 
 def lifePotion(placeholder, user=None):

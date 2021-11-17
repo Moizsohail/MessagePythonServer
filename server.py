@@ -9,6 +9,7 @@
 import datetime
 import os
 from socket import *
+from socket import timeout
 from threading import Thread
 import argparse
 
@@ -31,6 +32,7 @@ offline = Offline()
 
 serverHost = "127.0.0.1"
 serverPort = args.server_port
+timeout = args.timeout
 serverAddress = (serverHost, serverPort)
 
 # define socket for the server side and bind address
@@ -56,12 +58,13 @@ class ClientThread(Thread):
         try:
             while self.clientAlive:
                 try:
-                    self.clientSocket.settimeout(10000)
+                    self.clientSocket.settimeout(timeout)
                     try:
                         message = self.recvFromClient()
                         cmd = message[0]
-                    except timeout:
-                        self.processInactivity()
+                    except Exception as e:
+                        if str(e) == "timed out":
+                            self.processInactivity()
                     self.clientSocket.settimeout(None)
 
                     if not self.isAuthenticated:
@@ -90,6 +93,8 @@ class ClientThread(Thread):
                     elif cmd == LOGOUT:
                         self.processLogout()
                     else:
+                        if cmd in REQUIRES_PRINT:
+                            raise CustomExceptions(message)
                         raise CustomExceptions(INVALID_COMMAND)
                 except CustomExceptions as e:
                     self.sendToClient(str(e))
@@ -128,7 +133,7 @@ class ClientThread(Thread):
         username = message[1]
         user = users.get(username)
         if not user:
-            raise CustomExceptions(USER_NOT_ONLINE)
+            raise CustomExceptions(f"{USER_NOT_ONLINE} {username}")
         if user.authenticateP2PRequest(username):
             raise CustomExceptions(INVALID_INPUT)
 
@@ -177,7 +182,7 @@ class ClientThread(Thread):
         user = users.get(username)
         if username == self.user.username:
             raise CustomExceptions(OPERATION_NOT_ALLOWED_ON_SELF)
-        if self.isRegistered(username):
+        if not self.isRegistered(username):
             raise CustomExceptions(USER_NOT_FOUND)
         if not user:
             raise CustomExceptions(USER_NOT_ONLINE)

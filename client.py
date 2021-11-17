@@ -1,23 +1,20 @@
-"""
-    Python 3
-    Usage: python3 TCPClient3.py localhost 12000
-    coding: utf-8
-    
-    Author: Wei Song (Tutor for COMP3331/9331)
-"""
+import argparse
 from socket import *
-import sys
 from threading import Thread
 
 from constants import *
 from p2p import P2P
 
-# Server would be running on the same host as Client
-if len(sys.argv) != 3:
-    print("\n===== Error usage, python3 TCPClient3.py SERVER_IP SERVER_PORT ======\n")
-    exit(0)
-serverHost = sys.argv[1]
-serverPort = int(sys.argv[2])
+
+parser = argparse.ArgumentParser()
+parser.add_argument("server_addr", type=str, help="port to operate on")
+
+parser.add_argument("server_port", type=int, help="Block Duration")
+
+args = parser.parse_args()
+
+serverHost = args.server_addr
+serverPort = args.server_port
 serverAddress = (serverHost, serverPort)
 
 # define a socket for the client side, it would be used to communicate with the server
@@ -108,7 +105,12 @@ class KeyboardThread(Thread):
             elif cmd == START_PRIVATE:
                 sendToServer(message, None, payload=p2p.addressAsString())
             elif cmd == STOP_PRIVATE:
-                p2p.disconnect()
+                if p2p.isClientConnected:
+                    sendToServer(STOP_PRIVATE, p2p)
+                    p2p.disconnect()
+                else:
+                    print("You need to be connected first to disconnect.")
+
             else:
                 sendToServer(message)
 
@@ -146,6 +148,8 @@ while True:
             print("\n".join(data[1:]))
 
     elif cmd == PRIVATE_REQUEST:
+        if p2p.isClientConnected:
+            sendToServer(ALREADY_CONNECTED, None, p2p.connnectedWith)
         r = print("Do you want to initiate a private chat? (y/n)")
         startPrivateEvent = data[1:]
     elif cmd == PRIVATE_REQUEST_ACCEPTED:
@@ -164,11 +168,11 @@ while True:
     ## EXIT COMMANDS
     elif cmd in COMMON_EXIT_EXCEPTIONS:
         p2p.disconnect()
-        print(MESSAGES[cmd])
+        displayMessage(data)
         break
 
     elif cmd in REQUIRES_PRINT:
-        print(MESSAGES[cmd])
+        displayMessage(data)
 
     else:
         print("Message makes no sense")

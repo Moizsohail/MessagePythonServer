@@ -10,25 +10,28 @@ class P2P:
         hostname = gethostname()
         localIp = gethostbyname(hostname)
         self.address = localIp, self.server.getsockname()[1]
-        self.client = socket(AF_INET, SOCK_STREAM)
+        self.client = None
         self.isClientConnected = False
         self.connnectedWith = None
 
     def connect(self, addr, username):
         if not self.isClientConnected:
             self.connnectedWith = username
+            self.client = socket(AF_INET, SOCK_STREAM)
             self.client.connect(addr)
             self.isClientConnected = True
         else:
-            print(f"Cannot connect! Already paired with {self.address}")
+            print(f"Cannot connect! Already paired with {self.connnectedWith}")
 
     def addressAsString(self):
         ip, port = self.address
         return f"{ip} {port}"
 
     def disconnect(self):
-        print("DiCONNECT")
-        self.client.detach()
+        if self.client:
+            self.client.close()
+        if self.connnectedWith:
+            print(f"Disconnecting private connection with {self.connnectedWith}")
         self.isClientConnected = False
         self.connnectedWith = None
 
@@ -53,8 +56,7 @@ class ClientThread(Thread):
         self.detachClbk = detachClbk
 
     def run(self):
-
-        self.clientSocket.settimeout(10000)
+        self.clientSocket.settimeout(300)
         try:
             while True:
                 message = recvFromServer(self.clientSocket)
@@ -64,5 +66,7 @@ class ClientThread(Thread):
                 text = " ".join(message[2:])
                 username = message[1]
                 print(f"{username}(private): {text}")
-        except timeout:
-            self.processInactivity()
+        except Exception as e:
+            if str(e) == "timed out":
+                print("P2P connection is inactive for too long")
+                self.detachClbk()
