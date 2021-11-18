@@ -5,6 +5,7 @@ from threading import Thread
 from constants import *
 from p2p import P2P
 
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument("server_addr", type=str, help="port to operate on")
@@ -148,7 +149,16 @@ while True:
     if cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
     elif cmd == OFFLINE:
-        print(f"{data[1]}: {' '.join(data[2:])}")
+        msg = " ".join(data[1:])
+        print(
+            "While you were online, your friends you sent you these",
+        )
+        msgs = json.loads(msg)
+        for msg in msgs:
+
+            split = msg.split(" ")
+
+            print(f"{split[0]}: {' '.join(split[1:])}")
     elif cmd == LIST_OF_OTHER_USERS:
         if len(data[1:]) == 0:
             print("Nobody but you.")

@@ -19,7 +19,6 @@
       "request": "launch",
       "args": ["8080", "100", "300", "-d"],
       "program": "server.py",
-      "preLaunchTask": "reset 8080",
       "console": "integratedTerminal"
     },
     {

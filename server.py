@@ -7,6 +7,7 @@
     Author: Wei Song (Tutor for COMP3331/9331)
 """
 import datetime
+import json
 import os
 from socket import *
 from socket import timeout as TimeoutException
@@ -118,8 +119,8 @@ class ClientThread(Thread):
 
         if payload:
             message += f" {payload}"
-        
-        (self.clientSocket if not user else user.clientSocket).send(message.encode())
+
+        (self.clientSocket if not user else user.clientSocket).sendall(message.encode())
 
         if args.d:
             print(
@@ -131,9 +132,7 @@ class ClientThread(Thread):
 
             msgs = offline.fetch(self.user.username)
             if len(msgs) > 0:
-                self.sendToClient(OFFLINE)
-            for msg in msgs:
-                self.sendToClient(MESSAGE, msg)
+                self.sendToClient(OFFLINE, json.dumps(msgs))
 
     def processDeniedP2PRequest(self, message):
         if len(message) < 2:
@@ -327,7 +326,7 @@ class ClientThread(Thread):
         foundPassword = None
         user = users.get(username)
         if user and user.online:
-            raise CustomExceptions(f"ALREADY_ACTIVE")
+            raise CustomExceptions(f"{ALREADY_ACTIVE}")
 
         if os.path.isfile(CREDENTIALS_FILE):
             with open(CREDENTIALS_FILE, "r") as f:
