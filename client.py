@@ -139,7 +139,7 @@ while True:
 
     data = recvFromServer()
     cmd = data[0]
-    print(data)
+    
     if cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
 

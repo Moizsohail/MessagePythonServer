@@ -21,7 +21,6 @@ class User:
         self.clientAddress = clientAddress
 
     def signOut(self):
-        print("[SIGN OUT CALLED]")
         self.online = False
         self.clientAddress = None
         self.acceptingP2PConnectionsWith = None

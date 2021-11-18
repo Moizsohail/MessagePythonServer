@@ -120,7 +120,8 @@ class ClientThread(Thread):
 
         if payload:
             message += f" {payload}"
-
+        if not (self.clientSocket if not user else user.clientSocket):
+            print(user.username)
         (self.clientSocket if not user else user.clientSocket).send(message.encode())
 
         if args.d:
@@ -313,6 +314,7 @@ class ClientThread(Thread):
             users[username] = self.user
         else:
             self.user = user
+            self.user.signIn(self.clientSocket, self.clientAddress)
 
     def processInactivity(self):
         self.notifyAll(lifePotion("User timed out.", self.user.username))
@@ -334,7 +336,7 @@ class ClientThread(Thread):
                     pwd = pwd.replace("\n", "")
                     if usr == username:
                         foundPassword = pwd
-        print("[user]")
+        
         if not foundPassword:
             self.sendToClient(NEW_USER)
         else:
@@ -366,7 +368,6 @@ class ClientThread(Thread):
         self.sendToClient(AUTHENTICATED)
         self.initUser(username, password)
         self.isAuthenticated = True
-        self.user.signIn(self.clientSocket, self.clientAddress)
 
 
 print("\n===== Server is running =====")
