@@ -137,7 +137,7 @@ while True:
 
     data = recvFromServer()
     cmd = data[0]
-
+    print(data)
     if cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
 
@@ -167,6 +167,8 @@ while True:
         print(" ".join(data[2:]))
     ## EXIT COMMANDS
     elif cmd in COMMON_EXIT_EXCEPTIONS:
+        if p2p.isClientConnected:
+            sendToServer(cmd, p2p)
         p2p.disconnect()
         displayMessage(data)
         break

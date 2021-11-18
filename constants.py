@@ -17,12 +17,15 @@ PRIVATE_REQUEST = "PrivateRequest"
 # INITIATE_PRIVATE = "InitiatePrivate"
 LIST_OF_OTHER_USERS = "ListOfOtherUsers"
 LIST_OF_OTHER_USERS_SINCE = "ListOfOtherUsersSince"
+UNBLOCKED = "Unblocked"
 FOUND_USER = "ExistingUser"
 SUCCESS = "Success"
+BLOCKED = "Blocked"
 PRIVATE_REQUEST_ACCEPTED = "PrivateRequestAccepted"
 AUTHENTICATED = "AuthenticationSuccessful"
 
 
+TOO_MANY_ATTEMPTS = "TooManyAttempts"
 INVALID_CREDENTIALS = "InvalidCredentials"
 INACTIVITY = "Inactive"
 PRIVATE_REQUEST_DENIED = "PrivateRequestDenied"
@@ -51,32 +54,33 @@ REQUIRES_PRINT = [
     INVALID_COMMAND,
     ALREADY_CONNECTED,
     INACTIVITY,
+    BLOCKED,
+    UNBLOCKED,
 ]
 
-COMMON_EXIT_EXCEPTIONS = [
-    LOGOUT,
-    ALREADY_ACTIVE,
-    INACTIVITY,
-]
+COMMON_EXIT_EXCEPTIONS = [LOGOUT, ALREADY_ACTIVE, INACTIVITY, TOO_MANY_ATTEMPTS]
 
 MESSAGES = {
     AUTHENTICATED: "Authentication Successful",
     INVALID_CREDENTIALS: "Invalid Credentials",
     INVALID_COMMAND: "Do not understand this command",
-    INACTIVITY: "Inactive for too long",
-    ALREADY_ACTIVE: "The user is already online",
+    INACTIVITY: "Inactive for too long. Exiting",
+    ALREADY_ACTIVE: "User is already online on another device",
     USER_NOT_FOUND: "User not found",
     LOGOUT: "Logging out",
+    BLOCKED: "User is successfully blocked",
+    UNBLOCKED: "User is successfully unblocked",
     INVALID_INPUT: "Invalid Input",
-    USER_NOT_ONLINE: "The selected user is currently offline",
+    USER_NOT_ONLINE: "User is currently offline",
     OPERATION_NOT_ALLOWED_ON_SELF: "You can not run this operation on your own username",
     ALREADY_BLOCKED: "User is already blocked",
     SUCCESS: "Operation is successfully executed",
-    USER_IS_BLOCKED: "You are blocked by the user",
-    ALREADY_UNBLOCKED: "The user is already unblocked",
-    PRIVATE_REQUEST_DENIED: "The user has denied your request",
-    OFFLINE_MESSAGE_DELIVERED: "The user is offline. He will see the message when he/she comes online",
+    USER_IS_BLOCKED: "You are blocked by the User",
+    ALREADY_UNBLOCKED: "User is already unblocked",
+    PRIVATE_REQUEST_DENIED: "User has denied your request",
+    OFFLINE_MESSAGE_DELIVERED: "User is offline. He will see the message when he/she comes online",
     ALREADY_CONNECTED: "Cannot connect! Already paired with User",
+    TOO_MANY_ATTEMPTS: "MAX attempts exceeded. You are blocked Try again in a while",
 }
 
 CREDENTIALS_FILE = "credentials.txt"
@@ -90,10 +94,11 @@ class CustomExceptions(Exception):
 
 
 def displayMessage(response):
+
     msg = MESSAGES[response[0]]
     if len(response) == 2:
         msg = lifePotion(msg, response[1])
-    return msg
+    print(msg)
 
 
 def lifePotion(placeholder, user=None):
