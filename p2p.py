@@ -71,13 +71,15 @@ class ClientThread(Thread):
             while True:
                 message = recvFromServer(self.clientSocket)
                 if message[0] == "":
-                    pass
+                    break
                 if message[0] == STOP_PRIVATE:
                     self.detachClbk()
                     break
                 elif message[0] in COMMON_EXIT_EXCEPTIONS:
                     self.detachClbk()
                     break
+                if len(message) != 3:
+                    break           
                 text = " ".join(message[2:])
                 username = message[1]
                 print(f"{username}(private): {text}")
