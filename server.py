@@ -314,7 +314,6 @@ class ClientThread(Thread):
             users[username] = self.user
         else:
             self.user = user
-            self.user.signIn(self.clientSocket, self.clientAddress)
 
     def processInactivity(self):
         self.notifyAll(lifePotion("User timed out.", self.user.username))
@@ -365,9 +364,11 @@ class ClientThread(Thread):
             self.notifyAll(lifePotion("User logged in.", username))
 
     def executeLogin(self, username, password):
-        self.sendToClient(AUTHENTICATED)
         self.initUser(username, password)
         self.isAuthenticated = True
+        self.user.signIn(self.clientSocket, self.clientAddress)
+        self.sendToClient(AUTHENTICATED)
+        
 
 
 print("\n===== Server is running =====")
