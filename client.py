@@ -63,7 +63,9 @@ def authenticate(username):
     return username
 
 
-username = input("Username: ")
+username = ""
+while len(username) == 0:
+    username = input("Username: ")
 authenticate(username)
 
 print("Welcome to the greatest messaging application ever!")
@@ -139,10 +141,11 @@ while True:
 
     data = recvFromServer()
     cmd = data[0]
-    
+
     if cmd == MESSAGE:
         print(f"{data[1]}: {' '.join(data[2:])}")
-
+    elif cmd == OFFLINE:
+        print(f"{data[1]}: {' '.join(data[2:])}")
     elif cmd == LIST_OF_OTHER_USERS:
         if len(data[1:]) == 0:
             print("Nobody but you.")
