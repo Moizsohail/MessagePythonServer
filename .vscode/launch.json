@@ -9,7 +9,7 @@
       "name": "Test client.py",
       "type": "python",
       "request": "launch",
-      "args": ["127.0.0.1", "8080"],
+      "args": ["127.0.0.1", "8010"],
       "program": "client.py",
       "console": "integratedTerminal"
     },
@@ -17,7 +17,7 @@
       "name": "Test server.py",
       "type": "python",
       "request": "launch",
-      "args": ["8080", "100", "300", "-d"],
+      "args": ["8010", "100", "300", "-d"],
       "program": "server.py",
       "console": "integratedTerminal"
     },
