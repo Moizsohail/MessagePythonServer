@@ -47,8 +47,8 @@ def authenticate(username):
     cmd = recvFromServer()[0]
     if cmd == NEW_USER:
         password = input("This is a new user. Enter a password: ")
-    elif cmd == ALREADY_ACTIVE:
-        print("The user is already online on another client")
+    elif cmd in COMMON_EXIT_EXCEPTIONS:
+        print(MESSAGES[cmd])
         exit(0)
     else:
         password = input("Password: ")
@@ -59,6 +59,9 @@ def authenticate(username):
         ## TODO: Add blocking mech
         if cmd == AUTHENTICATED:
             break
+        elif cmd in COMMON_EXIT_EXCEPTIONS:
+            print(MESSAGES[cmd])
+            exit(0)
         password = input("Invalid credentials. Enter a password: ")
     return username
 

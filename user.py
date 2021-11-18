@@ -46,5 +46,6 @@ class AttemptsExceededUsers:
 
     def checkBlocked(self, username):
         time = self.data.get(username)
-        if time and time < datetime.datetime.now():
+        now = datetime.datetime.now()
+        if time and time >= now:
             raise CustomExceptions(TOO_MANY_ATTEMPTS)

@@ -118,8 +118,7 @@ class ClientThread(Thread):
 
         if payload:
             message += f" {payload}"
-        if not (self.clientSocket if not user else user.clientSocket):
-            print(user.username)
+        
         (self.clientSocket if not user else user.clientSocket).send(message.encode())
 
         if args.d:

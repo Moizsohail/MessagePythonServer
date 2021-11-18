@@ -10,4 +10,6 @@ class Offline:
             self.map[username].append(message)
 
     def fetch(self, username):
-        return self.map.get(username) or []
+        messages = self.map.get(username) or []
+        self.map = []
+        return messages
