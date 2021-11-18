@@ -17,15 +17,16 @@ class User:
 
     def signIn(self, clientSocket, clientAddress):
         self.online = True
-        self.clientAddress = clientSocket
+        self.clientSocket = clientSocket
         self.clientAddress = clientAddress
 
     def signOut(self):
         self.online = False
         self.clientAddress = None
         self.acceptingP2PConnectionsWith = None
-        self.clientSocket.close()
-        self.clientSocket = None
+        if self.clientSocket:
+            self.clientSocket.close()
+            self.clientSocket = None
 
     def authenticateP2PRequest(self, username):
         return self.acceptingP2PConnectionsWith == username

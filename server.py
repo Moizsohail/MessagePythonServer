@@ -102,15 +102,13 @@ class ClientThread(Thread):
                         raise CustomExceptions(INVALID_COMMAND)
                 except CustomExceptions as e:
                     self.sendToClient(str(e))
-
                     if str(e) in COMMON_EXIT_EXCEPTIONS:
                         raise e
 
         except CustomExceptions as e:
-            pass
-        finally:
-
-            if self.user:
+            if args.d:
+                print(str(e))
+            if self.user and self.user.online:
                 self.user.signOut()
 
     def sendToClient(self, command, payload=None, user=None):
@@ -131,7 +129,10 @@ class ClientThread(Thread):
 
     def processOfflineQueue(self):
         if self.isAuthenticated:
+
             msgs = offline.fetch(self.user.username)
+            if len(msgs) > 0:
+                self.sendToClient(OFFLINE)
             for msg in msgs:
                 self.sendToClient(MESSAGE, msg)
 
@@ -285,11 +286,11 @@ class ClientThread(Thread):
         text = " ".join(message[2:])
         user = users.get(username)
 
-        if not user:
+        if not self.isRegistered(username):
             raise CustomExceptions(f"{USER_NOT_FOUND} {username}")
-        if self.user.username in user.blockedUserNames:
+        if user and self.user.username in user.blockedUserNames:
             raise CustomExceptions(f"{USER_IS_BLOCKED} {username}")
-        if not user.online:
+        if not user or not user.online:
             offline.queue(username, f"{self.user.username} {text}")
             raise CustomExceptions(f"{OFFLINE_MESSAGE_DELIVERED} {username}")
 
@@ -335,7 +336,7 @@ class ClientThread(Thread):
                     pwd = pwd.replace("\n", "")
                     if usr == username:
                         foundPassword = pwd
-        
+
         if not foundPassword:
             self.sendToClient(NEW_USER)
         else:
@@ -368,7 +369,6 @@ class ClientThread(Thread):
         self.isAuthenticated = True
         self.user.signIn(self.clientSocket, self.clientAddress)
         self.sendToClient(AUTHENTICATED)
-        
 
 
 print("\n===== Server is running =====")

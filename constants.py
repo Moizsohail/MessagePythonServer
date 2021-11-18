@@ -40,6 +40,7 @@ ALREADY_UNBLOCKED = "AlreadyUnblocked"
 INVALID_COMMAND = "INVALID COMMAND"
 OFFLINE_MESSAGE_DELIVERED = "OfflineMessageDelivered"
 ALREADY_CONNECTED = "AlreadyConnected"
+OFFLINE = "Offline"
 REQUIRES_PRINT = [
     SUCCESS,
     USER_NOT_FOUND,
@@ -56,9 +57,17 @@ REQUIRES_PRINT = [
     INACTIVITY,
     BLOCKED,
     UNBLOCKED,
+    OFFLINE,
+    STOP_PRIVATE,
 ]
 
-COMMON_EXIT_EXCEPTIONS = [LOGOUT, ALREADY_ACTIVE, INACTIVITY, TOO_MANY_ATTEMPTS]
+COMMON_EXIT_EXCEPTIONS = [
+    LOGOUT,
+    ALREADY_ACTIVE,
+    INACTIVITY,
+    TOO_MANY_ATTEMPTS,
+    STOP_PRIVATE,
+]
 
 MESSAGES = {
     AUTHENTICATED: "Authentication Successful",
@@ -81,6 +90,7 @@ MESSAGES = {
     OFFLINE_MESSAGE_DELIVERED: "User is offline. He will see the message when he/she comes online",
     ALREADY_CONNECTED: "Cannot connect! Already paired with User",
     TOO_MANY_ATTEMPTS: "MAX attempts exceeded. You are blocked Try again in a while",
+    OFFLINE: "While you were online, your friends you sent you these",
 }
 
 CREDENTIALS_FILE = "credentials.txt"
@@ -90,7 +100,6 @@ BUFFER_SIZE = 1024
 class CustomExceptions(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-        
 
 
 def displayMessage(response):
