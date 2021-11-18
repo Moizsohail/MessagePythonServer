@@ -210,6 +210,7 @@ class ClientThread(Thread):
                 for username in users
                 if username != self.user.username
                 and self.user.username not in users[username].blockedUserNames
+                and users[username].online
                 and self.user.activeSince > date
             ]
         )
@@ -221,6 +222,7 @@ class ClientThread(Thread):
                 username
                 for username in users
                 if username != self.user.username
+                and users[username].online
                 and self.user.username not in users[username].blockedUserNames
             ]
         )

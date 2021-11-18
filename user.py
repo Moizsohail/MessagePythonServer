@@ -17,6 +17,7 @@ class User:
 
     def signIn(self, clientSocket, clientAddress):
         self.online = True
+        self.activeSince = datetime.datetime.now()
         self.clientSocket = clientSocket
         self.clientAddress = clientAddress
 

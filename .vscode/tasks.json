@@ -6,7 +6,7 @@
     {
       "label": "reset 8080",
       "type": "shell",
-      "command": "lsof -t -i tcp:8080 | xargs kill -9"
+      "command": "sudo lsof -t -i tcp:8080 | xargs kill -9"
     }
   ]
 }

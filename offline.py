@@ -11,5 +11,5 @@ class Offline:
 
     def fetch(self, username):
         messages = self.map.get(username) or []
-        self.map = []
+        self.map = {}
         return messages
