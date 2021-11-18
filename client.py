@@ -22,7 +22,6 @@ masterSocket = socket(AF_INET, SOCK_STREAM)
 # build connection with the server and send message to it
 masterSocket.connect(serverAddress)
 
-p2p = P2P()
 
 ## Credentials
 def sendToServer(message, p2p=None, payload=None):
@@ -31,6 +30,9 @@ def sendToServer(message, p2p=None, payload=None):
     if payload:
         message += f" {payload}"
     (masterSocket if not p2p else p2p.client).send(message.encode())
+
+
+p2p = P2P()
 
 
 def recvFromServer(p2p=None):

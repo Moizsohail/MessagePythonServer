@@ -3,8 +3,17 @@ from threading import Thread
 from constants import *
 
 
+def sendToServer(message, p2p, payload=None):
+    # if args.d:
+    # print(f"[send] {message}")
+    if payload:
+        message += f" {payload}"
+    (p2p.client).send(message.encode())
+
+
 class P2P:
     def __init__(self):
+
         self.server = socket(AF_INET, SOCK_STREAM)
         self.server.bind(("", 0))
         hostname = gethostname()
@@ -39,7 +48,7 @@ class P2P:
         while True:
             self.server.listen()
             sock, address = self.server.accept()
-            clientThread = ClientThread(address, sock, self.disconnect)
+            clientThread = ClientThread(address, sock, self.disconnect, self)
             clientThread.start()
 
 
@@ -49,11 +58,12 @@ def recvFromServer(clientSocket):
 
 
 class ClientThread(Thread):
-    def __init__(self, clientAddress, clientSocket, detachClbk):
+    def __init__(self, clientAddress, clientSocket, detachClbk, p2p):
         Thread.__init__(self)
         self.clientAddress = clientAddress
         self.clientSocket = clientSocket
         self.detachClbk = detachClbk
+        self.p2p = p2p
 
     def run(self):
         self.clientSocket.settimeout(120)
@@ -70,7 +80,8 @@ class ClientThread(Thread):
                 text = " ".join(message[2:])
                 username = message[1]
                 print(f"{username}(private): {text}")
-        except Exception as e:
-            if str(e) == "timed out":
-                print("P2P connection is inactive for too long")
-                self.detachClbk()
+        except timeout:
+
+            print("P2P connection is inactive for too long")
+            sendToServer(INACTIVITY, self.p2p)
+            self.detachClbk()
